@@ -169,6 +169,22 @@ void M5StackCoreS3::setup(){
     aw9523.reg(0x12) = 0b11111111;  // LEDMODE_P0
     aw9523.reg(0x13) = 0b11111111;  // LEDMODE_P1
 
+    if (this->interrupt_pin_ != nullptr) {
+      this->store_.trigger_ = false;
+      this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT | gpio::FLAG_PULLUP);
+      this->interrupt_pin_->setup();
+      this->store_.interrupt_pin_ = this->interrupt_pin_->to_isr();
+      this->interrupt_pin_->attach_interrupt(M5StackCoreS3Store::aw9523_intr, &this->store_, gpio::INTERRUPT_ANY_EDGE);
+      if (this->touchscreen_ != nullptr) {
+        this->touchscreen_->setup_external_interrupt();
+      }
+    }
+    aw9523.reg(0x06) = 0b11111111;  // INT_P0
+    aw9523.reg(0x07) = 0b11111011;  // INT_P1
+    uint8_t p0 = aw9523.reg(0x00).get();  // Clear INT_P0
+    uint8_t p1 = aw9523.reg(0x01).get();  // Clear INT_P1
+
+
     if(this->aw9523_ != nullptr){
         this->write_bus_out_en(this->bus_out_en_);
         this->write_usb_otg_en(this->usb_otg_en_);
@@ -183,6 +199,28 @@ void M5StackCoreS3::write_bus_out_en(bool flag){
     this->aw9523_->set_pin_value( AW9523Port::PORT_0, 1, flag);
 }
 
+void IRAM_ATTR M5StackCoreS3Store::aw9523_intr(M5StackCoreS3Store *arg) {
+  arg->trigger_ = true;
+}
+
+void IRAM_ATTR M5StackCoreS3::loop() {
+  if (this->store_.trigger_) {
+    {
+      InterruptLock lock;
+      this->store_.trigger_ = false;
+    }
+    i2c::I2CDevice aw9523;
+    aw9523.set_i2c_bus( this->bus_);
+    aw9523.set_i2c_address(0x58);
+    uint8_t p0 = aw9523.reg(0x00).get();
+    uint8_t p1 = aw9523.reg(0x01).get();
+    bool touch_irq = ((p1 & 0b00000100) >> 2) == 1;
+    if (touch_irq && this->touchscreen_ != nullptr) {
+      this->touchscreen_->trigger_external_interrupt();
+      this->touchscreen_->loop();
+    }
+  }
+}
 
 
 }
