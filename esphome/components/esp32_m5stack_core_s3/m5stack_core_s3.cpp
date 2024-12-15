@@ -222,6 +222,17 @@ void IRAM_ATTR M5StackCoreS3::loop() {
   }
 }
 
+void M5StackCoreS3::set_backlight_state(bool state) {
+  i2c::I2CDevice axp2101;
+  axp2101.set_i2c_bus( this->bus_);
+  axp2101.set_i2c_address(0x34);
+
+  if (state) {
+    axp2101.reg(0x90) = 0xBF;
+  } else {
+    axp2101.reg(0x90) = 0x3F;
+  }
+}
 
 }
 }

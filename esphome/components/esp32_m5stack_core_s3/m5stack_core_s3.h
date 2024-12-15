@@ -38,6 +38,8 @@ public:
     void set_interrupt_pin(InternalGPIOPin *pin) { this->interrupt_pin_ = pin; }
     void set_touchscreen(touchscreen::Touchscreen *touchscreen) { touchscreen_ = touchscreen; }
 
+    void set_backlight_state(bool state);
+
 protected:
     M5StackCoreS3Store store_{};
     AXP2101Component* axp2101_{nullptr};
