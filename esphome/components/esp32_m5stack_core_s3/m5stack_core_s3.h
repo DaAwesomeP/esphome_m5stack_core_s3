@@ -26,6 +26,8 @@ public:
     void set_usb_otg_en(bool flag){this->usb_otg_en_ = flag;}
     void set_bus_out_en(bool flag){this->bus_out_en_ = flag;}
 
+    void set_backlight_state(bool state);
+
 protected:
     AXP2101Component* axp2101_{nullptr};
     aw9523::AW9523Component* aw9523_{nullptr};
