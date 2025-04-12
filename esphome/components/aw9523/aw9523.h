@@ -37,6 +37,8 @@ public:
 
     std::string dump_summary() const override {return ""; };
 
+    gpio::Flags get_flags() const override { return this->flags_; }
+
 protected:
     AW9523Component *parent_;
     AW9523Port port_;
